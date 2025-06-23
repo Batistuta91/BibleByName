@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מציאת פסוק לפי שם - מתוך מאגר Sefaria</title>
+    <style>
+        /* העיצוב נשאר זהה */
+        body { font-family: 'Arial', sans-serif; background-color: #f4f4f9; color: #333; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { width: 100%; max-width: 700px; background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); text-align: center; }
+        h1 { color: #0056b3; font-size: 2em; }
+        .explanation p { line-height: 1.6; text-align: right; }
+        .search-area { margin-top: 30px; padding: 20px; background-color: #e9ecef; border-radius: 8px; }
+        label { font-size: 1.2em; font-weight: bold; }
+        input[type="text"] { width: 60%; padding: 10px; margin-top: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 1.1em; text-align: right; }
+        button { padding: 12px 25px; font-size: 1.1em; color: #fff; background-color: #28a745; border: none; border-radius: 5px; cursor: pointer; margin-top: 15px; transition: background-color 0.3s; }
+        button:hover { background-color: #218838; }
+        button:disabled { background-color: #a0a0a0; cursor: not-allowed; }
+        #result { margin-top: 30px; padding: 20px; background-color: #fff3cd; border: 1px solid #ffeeba; border-radius: 8px; min-height: 50px; font-size: 1.3em; font-weight: bold; line-height: 1.7; color: #856404; }
+        .reference { font-size: 0.9em; color: #666; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>פסוק אישי מן התורה</h1>
+        <div class="explanation">
+            <p>הכלי מתחבר בזמן אמת למאגר התורני של <b>Sefaria</b>, טוען את כל חמשת חומשי תורה ומחפש פסוק המתאים לשמכם.</p>
+        </div>
+
+        <div class="search-area">
+            <label for="nameInput">הכניסו את שמכם ולחצו כדי למצוא את הפסוק:</label><br>
+            <input type="text" id="nameInput" placeholder="לדוגמא: אברהם">
+            <br>
+            <button id="searchButton" onclick="findVerse()">מצא פסוק</button>
+        </div>
+
+        <div id="result">
+            <p id="status">טוען את חמשת חומשי תורה מ-Sefaria, אנא המתן...</p>
+        </div>
+    </div>
+
+    <script>
+        let allVerses = [];
+        const searchButton = document.getElementById('searchButton');
+        const statusP = document.getElementById('status');
+        searchButton.disabled = true;
+
+        const hebrewBookNames = {
+            'Genesis': 'בראשית', 'Exodus': 'שמות', 'Leviticus': 'ויקרא', 
+            'Numbers': 'במדבר', 'Deuteronomy': 'דברים'
+        };
+
+        // פונקציה לטעינת כל חומשי התורה מה-API
+        async function loadAllTorahBooks() {
+            const books = ['Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy'];
+            let loadedCount = 0;
+            
+            try {
+                const promises = books.map(book => 
+                    fetch(`https://www.sefaria.org/api/texts/${book}`)
+                        .then(response => {
+                            if (!response.ok) throw new Error(`Failed to load ${book}`);
+                            loadedCount++;
+                            statusP.textContent = `טוען... (${loadedCount}/${books.length}) - ${hebrewBookNames[book]}`;
+                            return response.json();
+                        })
+                );
+
+                const allBookData = await Promise.all(promises);
+
+                statusP.textContent = 'מעבד את הנתונים...';
+                
+                // עיבוד המידע שהתקבל למבנה הפנימי שלנו
+                allBookData.forEach(bookData => {
+                    const hebrewBook = bookData.heRef;
+                    bookData.he.forEach((chapter, chapterIndex) => {
+                        chapter.forEach((verseText, verseIndex) => {
+                            allVerses.push({
+                                text: verseText,
+                                reference: `${hebrewBook} ${String.fromCharCode(1488 + chapterIndex)}׳, ${String.fromCharCode(1488 + verseIndex)}׳`
+                            });
+                        });
+                    });
+                });
+                
+                statusP.textContent = `המאגר נטען (${allVerses.length.toLocaleString()} פסוקים). ניתן לחפש.`;
+                searchButton.disabled = false;
+
+            } catch (error) {
+                console.error('Sefaria API Error:', error);
+                statusP.textContent = 'שגיאת רשת: לא ניתן היה להתחבר למאגר של Sefaria. אנא בדוק את חיבור האינטרנט שלך ורענן את הדף.';
+                statusP.style.color = 'red';
+            }
+        }
+
+        function findVerse() {
+            const nameInput = document.getElementById('nameInput').value.trim();
+            const resultDiv = document.getElementById('result');
+            if (nameInput.length < 2) {
+                resultDiv.innerHTML = '<p>אנא הכנס שם בעל שתי אותיות לפחות.</p>';
+                return;
+            }
+            const firstLetter = nameInput[0];
+            const lastLetter = nameInput[nameInput.length - 1];
+            
+            const getNormalizedLetter = (letter) => {
+                const finalLetters = { 'ך': 'כ', 'ם': 'מ', 'ן': 'נ', 'ף': 'פ', 'ץ': 'צ' };
+                return finalLetters[letter] || letter;
+            };
+
+            const normalizedLastLetter = getNormalizedLetter(lastLetter);
+            let foundVerse = null;
+
+            for (const item of allVerses) {
+                const text = item.text.replace(/<[^>]*>/g, ''); // הסרת תגיות HTML אם קיימות
+                const words = text.split(' ');
+                if (words.length === 0) continue;
+                
+                const firstWord = words[0];
+                const lastWord = words[words.length - 1];
+
+                if (!firstWord || !lastWord) continue;
+
+                const verseFirstLetter = firstWord[0];
+                let verseLastLetter = lastWord.slice(-1);
+                
+                if ('.,?!;׃'.includes(verseLastLetter)) {
+                    if (lastWord.length > 1) {
+                       verseLastLetter = lastWord.slice(-2, -1);
+                    } else {
+                       verseLastLetter = lastWord[0];
+                    }
+                }
+                
+                if (verseFirstLetter === firstLetter && getNormalizedLetter(verseLastLetter) === normalizedLastLetter) {
+                    foundVerse = item;
+                    break; 
+                }
+            }
+
+            if (foundVerse) {
+                resultDiv.innerHTML = `<p>${foundVerse.text.replace(/<[^>]*>/g, '')}</p><p class="reference">${foundVerse.reference}</p>`;
+            } else {
+                resultDiv.innerHTML = `<p>לא נמצא פסוק מתאים לשם '${nameInput}' בחמשת חומשי תורה.</p>`;
+            }
+        }
+
+        // טעינת המידע מיד כשהדף עולה
+        document.addEventListener('DOMContentLoaded', loadAllTorahBooks);
+    </script>
+</body>
+</html>
