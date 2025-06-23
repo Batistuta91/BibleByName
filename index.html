@@ -3,38 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מציאת פסוק לפי שם - מתוך מאגר Sefaria</title>
+    <title>פסוק אישי לפי שם - סגולה ליום הדין</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@700&family=Assistant:wght@400;600&display=swap" rel="stylesheet">
+
     <style>
-        /* העיצוב נשאר זהה */
-        body { font-family: 'Arial', sans-serif; background-color: #f4f4f9; color: #333; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .container { width: 100%; max-width: 700px; background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); text-align: center; }
-        h1 { color: #0056b3; font-size: 2em; }
-        .explanation p { line-height: 1.6; text-align: right; }
-        .search-area { margin-top: 30px; padding: 20px; background-color: #e9ecef; border-radius: 8px; }
-        label { font-size: 1.2em; font-weight: bold; }
-        input[type="text"] { width: 60%; padding: 10px; margin-top: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 1.1em; text-align: right; }
-        button { padding: 12px 25px; font-size: 1.1em; color: #fff; background-color: #28a745; border: none; border-radius: 5px; cursor: pointer; margin-top: 15px; transition: background-color 0.3s; }
-        button:hover { background-color: #218838; }
-        button:disabled { background-color: #a0a0a0; cursor: not-allowed; }
-        #result { margin-top: 30px; padding: 20px; background-color: #fff3cd; border: 1px solid #ffeeba; border-radius: 8px; min-height: 50px; font-size: 1.3em; font-weight: bold; line-height: 1.7; color: #856404; }
-        .reference { font-size: 0.9em; color: #666; margin-top: 10px; }
+        /* --- General Styling --- */
+        :root {
+            --primary-color: #0D2B45; /* כחול עמוק */
+            --secondary-color: #205375; /* כחול ביניים */
+            --accent-color: #c09f80; /* זהב/ברונזה עדין */
+            --background-color: #f8f6f2; /* רקע אוף-ווייט חם */
+            --text-color: #333D45; /* אפור-כחול כהה לטקסט */
+            --light-bg: #FFFFFF; /* לבן */
+            --result-bg: #fffaf0; /* קרם בהיר לתוצאה */
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        body {
+            font-family: 'Assistant', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            line-height: 1.7;
+            background-image: url('https://www.transparenttextures.com/patterns/light-paper-fibers.png');
+        }
+
+        /* --- Container --- */
+        .container {
+            width: 100%;
+            max-width: 750px;
+            background-color: var(--light-bg);
+            padding: 40px 50px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            border-top: 5px solid var(--primary-color);
+        }
+
+        /* --- Typography --- */
+        h1 {
+            font-family: 'Frank Ruhl Libre', serif;
+            color: var(--primary-color);
+            font-size: 2.8em;
+            margin-bottom: 15px;
+        }
+
+        .explanation {
+            max-width: 600px;
+            margin: 0 auto 30px auto;
+            font-size: 1.1em;
+            color: #555;
+        }
+
+        strong {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        /* --- Search Area --- */
+        .search-area {
+            margin-top: 30px;
+            padding: 30px;
+            background-color: #f7f9fc;
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+        }
+
+        label {
+            font-size: 1.25em;
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+
+        input[type="text"] {
+            width: 70%;
+            padding: 12px 15px;
+            margin-top: 15px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1.2em;
+            text-align: right;
+            font-family: 'Assistant', sans-serif;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(192, 159, 128, 0.2);
+        }
+
+        button {
+            display: block;
+            width: 50%;
+            margin: 20px auto 0 auto;
+            padding: 14px 28px;
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--light-bg);
+            background-color: var(--accent-color);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #a88a6d; /* גוון כהה יותר של הצבע */
+            transform: translateY(-2px);
+        }
+        
+        button:disabled {
+            background-color: #a0a0a0;
+            cursor: not-allowed;
+        }
+
+        /* --- Result Area --- */
+        #result {
+            margin-top: 35px;
+            padding: 25px;
+            background-color: var(--result-bg);
+            border: 1px solid #e9e0d3;
+            border-radius: 8px;
+            min-height: 60px;
+            font-size: 1.4em;
+            font-weight: 600;
+            line-height: 1.8;
+            color: var(--text-color);
+        }
+        
+        #result.fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .reference {
+            font-size: 1rem;
+            color: var(--secondary-color);
+            margin-top: 15px;
+            font-weight: 400;
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>פסוק אישי מן התורה</h1>
+        <h1>פסוק אישי לפי שם</h1>
+
         <div class="explanation">
-            <p>הכלי מתחבר בזמן אמת למאגר התורני של <b>Sefaria</b>, טוען את כל חמשת חומשי תורה ומחפש פסוק המתאים לשמכם.</p>
+            <p><strong>סגולה שלא ישכח שמו ליום הדין:</strong> יאמר קודם "יהיו לרצון" השני בתפילת העמידה, פסוק מהתנ"ך המתחיל באות הראשונה של שמו ומסתיים באות האחרונה של שמו, או פסוק ששמו מופיע בו. להלן פסוקי התנ"ך ממויינים לפי האות הראשונה והאחרונה שלהם.</p>
         </div>
+
         <div class="search-area">
-            <label for="nameInput">הכניסו את שמכם ולחצו כדי למצוא את הפסוק:</label><br>
-            <input type="text" id="nameInput" placeholder="לדוגמא: אברהם">
+            <label for="nameInput">הכניסו שם ולחצו לחיפוש הפסוק</label><br>
+            <input type="text" id="nameInput" placeholder="לדוגמא: דניאל">
             <br>
-            <button id="searchButton" onclick="findVerse()">מצא פסוק</button>
+            <button id="searchButton" onclick="findVerse()">מצא את הפסוק שלי</button>
         </div>
+
         <div id="result">
-            <p id="status">טוען את חמשת חומשי תורה מ-Sefaria, אנא המתן...</p>
+            <p id="status">טוען את חמשת חומשי תורה מ-Sefaria, אנא המתן בסבלנות...</p>
         </div>
     </div>
 
@@ -42,48 +187,37 @@
         let allVerses = [];
         const searchButton = document.getElementById('searchButton');
         const statusP = document.getElementById('status');
+        const resultDiv = document.getElementById('result');
         searchButton.disabled = true;
 
-        // הגדרת מבנה התורה: כמה פרקים יש בכל ספר
         const torahStructure = {
-            'Genesis': { name: 'בראשית', chapters: 50 },
-            'Exodus': { name: 'שמות', chapters: 40 },
-            'Leviticus': { name: 'ויקרא', chapters: 27 },
-            'Numbers': { name: 'במדבר', chapters: 36 },
+            'Genesis': { name: 'בראשית', chapters: 50 }, 'Exodus': { name: 'שמות', chapters: 40 },
+            'Leviticus': { name: 'ויקרא', chapters: 27 }, 'Numbers': { name: 'במדבר', chapters: 36 },
             'Deuteronomy': { name: 'דברים', chapters: 34 }
         };
 
         async function loadAllTorahBooks() {
             let chapterRequests = [];
-            // יצירת רשימה של כל הפרקים בתורה
             for (const book in torahStructure) {
                 for (let i = 1; i <= torahStructure[book].chapters; i++) {
-                    // יצירת בקשת API לכל פרק בנפרד, למשל "Genesis.1", "Genesis.2" וכו'
                     chapterRequests.push(fetch(`https://www.sefaria.org/api/texts/${book}.${i}`));
                 }
             }
-
             statusP.textContent = `טוען ${chapterRequests.length} פרקים מהרשת...`;
 
             try {
                 const responses = await Promise.all(chapterRequests);
                 const chapterDataPromises = responses.map(res => res.json());
                 const allChapterData = await Promise.all(chapterDataPromises);
-
                 statusP.textContent = 'מעבד את הנתונים...';
 
-                // לולאה על המידע של כל פרק שקיבלנו
                 allChapterData.forEach(chapterInfo => {
-                    // המידע על שם הספר והפרק, למשל "בראשית א"
                     const hebrewReference = chapterInfo.heRef;
-                    // המערך 'he' מכיל את הפסוקים של אותו פרק
                     const versesInChapter = chapterInfo.he;
-
                     if (Array.isArray(versesInChapter)) {
                         versesInChapter.forEach((verseText, verseIndex) => {
                             allVerses.push({
                                 text: verseText,
-                                // יצירת מראה מקום, למשל "בראשית א, א"
                                 reference: `${hebrewReference}, ${String.fromCharCode(1488 + verseIndex)}׳`
                             });
                         });
@@ -100,14 +234,16 @@
             }
         }
 
-        // פונקציית החיפוש נשארת זהה לחלוטין
         function findVerse() {
             const nameInput = document.getElementById('nameInput').value.trim();
-            const resultDiv = document.getElementById('result');
             if (nameInput.length < 2) {
                 resultDiv.innerHTML = '<p>אנא הכנס שם בעל שתי אותיות לפחות.</p>';
                 return;
             }
+            // Add animation class when updating result
+            resultDiv.classList.remove('fade-in');
+            void resultDiv.offsetWidth; // Trigger reflow to restart animation
+
             const firstLetter = nameInput[0];
             const lastLetter = nameInput[nameInput.length - 1];
             const getNormalizedLetter = (letter) => {
@@ -142,6 +278,7 @@
             } else {
                 resultDiv.innerHTML = `<p>לא נמצא פסוק מתאים לשם '${nameInput}' בחמשת חומשי תורה.</p>`;
             }
+            resultDiv.classList.add('fade-in');
         }
 
         document.addEventListener('DOMContentLoaded', loadAllTorahBooks);
