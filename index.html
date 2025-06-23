@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מציאת פסוק לפי שם - מתוך מאגר Sefaria (גרסת ניפוי שגיאות)</title>
+    <title>מציאת פסוק לפי שם - מתוך מאגר Sefaria</title>
     <style>
         /* העיצוב נשאר זהה */
         body { font-family: 'Arial', sans-serif; background-color: #f4f4f9; color: #333; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
@@ -21,6 +21,7 @@
     </style>
 </head>
 <body>
+
     <div class="container">
         <h1>פסוק אישי מן התורה</h1>
         <div class="explanation">
@@ -43,43 +44,50 @@
         const statusP = document.getElementById('status');
         searchButton.disabled = true;
 
-        const hebrewBookNames = {
-            'Genesis': 'בראשית', 'Exodus': 'שמות', 'Leviticus': 'ויקרא', 
-            'Numbers': 'במדבר', 'Deuteronomy': 'דברים'
+        // הגדרת מבנה התורה: כמה פרקים יש בכל ספר
+        const torahStructure = {
+            'Genesis': { name: 'בראשית', chapters: 50 },
+            'Exodus': { name: 'שמות', chapters: 40 },
+            'Leviticus': { name: 'ויקרא', chapters: 27 },
+            'Numbers': { name: 'במדבר', chapters: 36 },
+            'Deuteronomy': { name: 'דברים', chapters: 34 }
         };
 
         async function loadAllTorahBooks() {
-            const books = ['Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy'];
+            let chapterRequests = [];
+            // יצירת רשימה של כל הפרקים בתורה
+            for (const book in torahStructure) {
+                for (let i = 1; i <= torahStructure[book].chapters; i++) {
+                    // יצירת בקשת API לכל פרק בנפרד, למשל "Genesis.1", "Genesis.2" וכו'
+                    chapterRequests.push(fetch(`https://www.sefaria.org/api/texts/${book}.${i}`));
+                }
+            }
+
+            statusP.textContent = `טוען ${chapterRequests.length} פרקים מהרשת...`;
+
             try {
-                const promises = books.map(book => 
-                    fetch(`https://www.sefaria.org/api/texts/${book}`)
-                        .then(response => response.json())
-                );
-                const allBookData = await Promise.all(promises);
-                
-                // ===== הדפסת ריגול 1: בוא נראה מה קיבלנו מה-API =====
-                console.log("Data received from Sefaria API:", allBookData);
+                const responses = await Promise.all(chapterRequests);
+                const chapterDataPromises = responses.map(res => res.json());
+                const allChapterData = await Promise.all(chapterDataPromises);
 
-                allBookData.forEach(bookData => {
-                    
-                    // ===== הדפסת ריגול 2: בוא נראה את המידע של הספר הנוכחי =====
-                    console.log("Processing book:", bookData.book);
+                statusP.textContent = 'מעבד את הנתונים...';
 
-                    const hebrewBook = bookData.heRef;
-                    bookData.he.forEach((chapter, chapterIndex) => {
-                        
-                        // ===== הדפסת ריגול 3: בוא נראה מה יש במשתנה 'chapter' ונבדוק אם הוא מערך =====
-                        console.log(`Is chapter ${chapterIndex + 1} an array?`, Array.isArray(chapter), "Content:", chapter);
+                // לולאה על המידע של כל פרק שקיבלנו
+                allChapterData.forEach(chapterInfo => {
+                    // המידע על שם הספר והפרק, למשל "בראשית א"
+                    const hebrewReference = chapterInfo.heRef;
+                    // המערך 'he' מכיל את הפסוקים של אותו פרק
+                    const versesInChapter = chapterInfo.he;
 
-                        if (Array.isArray(chapter)) {
-                            chapter.forEach((verseText, verseIndex) => {
-                                allVerses.push({
-                                    text: verseText,
-                                    reference: `${hebrewBook} ${String.fromCharCode(1488 + chapterIndex)}׳, ${String.fromCharCode(1488 + verseIndex)}׳`
-                                });
+                    if (Array.isArray(versesInChapter)) {
+                        versesInChapter.forEach((verseText, verseIndex) => {
+                            allVerses.push({
+                                text: verseText,
+                                // יצירת מראה מקום, למשל "בראשית א, א"
+                                reference: `${hebrewReference}, ${String.fromCharCode(1488 + verseIndex)}׳`
                             });
-                        }
-                    });
+                        });
+                    }
                 });
                 
                 statusP.textContent = `המאגר נטען (${allVerses.length.toLocaleString()} פסוקים). ניתן לחפש.`;
@@ -87,16 +95,12 @@
 
             } catch (error) {
                 console.error('Sefaria API Error:', error);
-                statusP.textContent = 'שגיאת רשת: לא ניתן היה להתחבר למאגר של Sefaria.';
+                statusP.textContent = 'שגיאת רשת: לא ניתן היה להתחבר למאגר של Sefaria. אנא בדוק את חיבור האינטרנט ורענן.';
                 statusP.style.color = 'red';
             }
         }
 
-        // פונקציית החיפוש נשארת זהה
-        function findVerse() { /* ... קוד החיפוש נשאר ללא שינוי ... */ }
-        document.addEventListener('DOMContentLoaded', loadAllTorahBooks);
-
-        // הדבקת פונקציית החיפוש המקורית במלואה
+        // פונקציית החיפוש נשארת זהה לחלוטין
         function findVerse() {
             const nameInput = document.getElementById('nameInput').value.trim();
             const resultDiv = document.getElementById('result');
@@ -139,6 +143,8 @@
                 resultDiv.innerHTML = `<p>לא נמצא פסוק מתאים לשם '${nameInput}' בחמשת חומשי תורה.</p>`;
             }
         }
+
+        document.addEventListener('DOMContentLoaded', loadAllTorahBooks);
     </script>
 </body>
 </html>
