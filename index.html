@@ -77,6 +77,12 @@
             color: var(--primary-color);
             font-weight: 600;
         }
+        
+        hr {
+            border: none;
+            border-top: 1px solid #e0e6ed;
+            margin: 20px 0;
+        }
 
         /* --- Search Area --- */
         .search-area {
@@ -144,53 +150,63 @@
             border: 1px solid #e9e0d3;
             border-radius: 8px;
             min-height: 60px;
-            font-size: 1.4em;
-            font-weight: 600;
+            font-size: 1.2em; /* הוקטן מעט להתאמה לריבוי תוצאות */
             line-height: 1.8;
             color: var(--text-color);
+            text-align: right;
         }
         
         #result.fade-in {
             animation: fadeIn 0.6s ease-out;
         }
 
+        .result-item {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e9e0d3;
+        }
+        .result-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .result-verse {
+            font-weight: 600;
+            font-size: 1.2em; /* הדגשת הפסוק עצמו */
+             color: var(--text-color);
+        }
+
         .reference {
             font-size: 1rem;
             color: var(--secondary-color);
-            margin-top: 15px;
+            margin-top: 10px;
             font-weight: 400;
-        }
-
-        .match-counter {
-            font-size: 0.8rem;
-            color: #777;
-            font-weight: 400;
-            margin-left: 10px;
         }
 
         .search-mode-info {
             font-style: italic;
             font-size: 0.9rem;
-            color: var(--secondary-color);
+            color: #777;
             margin-top: 5px;
         }
-/* --- Responsive Design for Mobile Phones --- */
+        /* --- Responsive Design for Mobile Phones --- */
         @media (max-width: 600px) {
             body {
-                padding: 10px; /* הקטנת הרווח מהקצוות של המסך */
+                padding: 10px; 
             }
 
             .container {
-                padding: 25px 15px; /* הקטנת הרווחים הפנימיים בתיבה הראשית */
+                padding: 25px 15px; 
                 margin: 0;
             }
 
             h1 {
-                font-size: 2.1em; /* הקטנת הכותרת הראשית */
+                font-size: 2.1em; 
             }
 
             .explanation {
-                font-size: 1em; /* הקטנת טקסט ההסבר */
+                font-size: 1em; 
             }
 
             .search-area {
@@ -198,17 +214,20 @@
             }
 
             input[type="text"] {
-                width: 90%; /* הרחבת שדה הקלט למילוי המסך */
+                width: 90%; 
             }
 
             button {
-                width: 80%; /* הרחבת הכפתור */
+                width: 80%; 
                 padding: 12px 20px;
             }
 
             #result {
-                font-size: 1.2em; /* הקטנת הפונט של התוצאה להתאמה למסך */
+                font-size: 1em; 
                 padding: 20px;
+            }
+            .result-verse {
+                font-size: 1.1em;
             }
         }
 
@@ -218,7 +237,7 @@
     <div class="container">
         <h1>פסוק אישי לפי שם</h1>
         <div class="explanation">
-            <p><strong>סגולה שלא ישכח שמו ליום הדין:</strong> יאמר קודם "יהיו לרצון" השני בתפילת העמידה, פסוק מהתנ"ך המתחיל באות הראשונה של שמו ומסתיים באות האחרונה של שמו, או פסוק ששמו מופיע בו. להלן פסוקי התנ"ך ממויינים לפי האות הראשונה והאחרונה שלהם.</p>
+            <p><strong>סגולה שלא ישכח שמו ליום הדין:</strong> יאמר קודם "יהיו לרצון" השני בתפילת העמידה, פסוק מהתנ"ך המתחיל באות הראשונה של שמו ומסתיים באות האחרונה של שמו, או פסוק ששמו מופיע בו. הכלי יציג את כל הפסוקים התואמים מכל התנ"ך.</p>
         </div>
         <div class="search-area">
             <label for="nameInput">הכניסו שם ולחצו לחיפוש הפסוק</label><br>
@@ -227,18 +246,13 @@
             <button id="searchButton" onclick="findVerse()">מצא את הפסוק שלי</button>
         </div>
         <div id="result">
-            <p id="status">טוען את חמשת חומשי תורה מ-Sefaria, אנא המתן בסבלנות...</p>
+            <p id="status">טוען את כל התנ"ך מ-Sefaria, אנא המתן בסבלנות...</p>
         </div>
     </div>
 
     <script>
         // --- Global Variables ---
-        let torahVerses = [];
-        let otherTanakhVerses = [];
-        let otherTanakhLoaded = false;
-        let currentMatches = [];
-        let currentMatchIndex = 0;
-        let lastSearchedName = '';
+        let allTanakhVerses = [];
 
         // --- DOM Elements ---
         const searchButton = document.getElementById('searchButton');
@@ -281,8 +295,9 @@
 
         async function loadInitialData() {
             try {
-                torahVerses = await loadBooks(tanakhStructure.Torah);
-                statusP.textContent = `המאגר נטען (${torahVerses.length.toLocaleString()} פסוקי תורה). ניתן לחפש.`;
+                const allBooks = { ...tanakhStructure.Torah, ...tanakhStructure.Neviim, ...tanakhStructure.Ketuvim };
+                allTanakhVerses = await loadBooks(allBooks);
+                statusP.textContent = `המאגר נטען (${allTanakhVerses.length.toLocaleString()} פסוקים). ניתן לחפש.`;
                 searchButton.disabled = false;
             } catch (error) {
                 console.error('Sefaria API Error:', error);
@@ -294,63 +309,35 @@
         // --- Main Search Logic ---
         async function findVerse() {
             searchButton.disabled = true; // Disable button during search
-            const currentName = nameInput.value.trim();
-            if (currentName.length < 2) {
+            const name = nameInput.value.trim();
+            if (name.length < 2) {
                 resultDiv.innerHTML = '<p>אנא הכנס שם בעל שתי אותיות לפחות.</p>';
                 searchButton.disabled = false;
                 return;
             }
 
-            if (currentName !== lastSearchedName) {
-                lastSearchedName = currentName;
-                
-                // Step 1: Search Torah by letters
-                currentMatches = findMatchesByLetters(currentName, torahVerses);
-                if (currentMatches.length > 0) {
-                    currentMatchIndex = 0;
-                    displayCurrentVerse("אות ראשונה ואחרונה (בתורה)");
-                    searchButton.disabled = false;
-                    return;
-                }
+            // Perform both searches across the entire Tanakh
+            const matchesByLetters = findMatchesByLetters(name, allTanakhVerses);
+            const matchesByName = findMatchesByName(name, allTanakhVerses);
 
-                // Step 2: Search rest of Tanakh by letters
-                resultDiv.innerHTML = `<p>לא נמצא פסוק בתורה. מחפש כעת בשאר התנ"ך...</p>`;
-                if (!otherTanakhLoaded) {
-                    const neviimKetuvim = { ...tanakhStructure.Neviim, ...tanakhStructure.Ketuvim };
-                    otherTanakhVerses = await loadBooks(neviimKetuvim);
-                    otherTanakhLoaded = true;
+            // Add searchMode property to each match for clear labeling
+            matchesByLetters.forEach(m => m.searchMode = "אות ראשונה ואחרונה");
+            matchesByName.forEach(m => m.searchMode = "השם מופיע בפסוק");
+            
+            // Combine results, prioritizing letter matches and avoiding duplicates
+            const allMatchesMap = new Map();
+            matchesByLetters.forEach(match => allMatchesMap.set(match.reference, match));
+            matchesByName.forEach(match => {
+                if (!allMatchesMap.has(match.reference)) {
+                    allMatchesMap.set(match.reference, match);
                 }
-                currentMatches = findMatchesByLetters(currentName, otherTanakhVerses);
-                if (currentMatches.length > 0) {
-                    currentMatchIndex = 0;
-                    displayCurrentVerse("אות ראשונה ואחרונה (נביאים וכתובים)");
-                    searchButton.disabled = false;
-                    return;
-                }
-                
-                // Step 3: Search entire Tanakh by name
-                resultDiv.innerHTML = `<p>לא נמצא פסוק לפי אותיות. מחפש פסוק המכיל את השם...</p>`;
-                const allTanakhVerses = [...torahVerses, ...otherTanakhVerses];
-                currentMatches = findMatchesByName(currentName, allTanakhVerses);
-                if(currentMatches.length > 0) {
-                    currentMatchIndex = 0;
-                    displayCurrentVerse("השם מופיע בפסוק");
-                    searchButton.disabled = false;
-                    return;
-                }
+            });
 
-                // Final: Not Found
-                resultDiv.innerHTML = `<p>לא נמצא פסוק מתאים לשם '${currentName}' בכל התנ"ך.</p>`;
+            const finalResults = Array.from(allMatchesMap.values());
+            
+            // Display all found results
+            displayAllResults(finalResults, name);
 
-            } else { // This is a "next verse" request
-                if (currentMatches.length <= 1) {
-                    searchButton.disabled = false;
-                    return;
-                }
-                currentMatchIndex++;
-                if (currentMatchIndex >= currentMatches.length) currentMatchIndex = 0;
-                displayCurrentVerse(document.querySelector('.search-mode-info').textContent.replace('שיטת חיפוש: ', ''));
-            }
             searchButton.disabled = false;
         }
         
@@ -358,42 +345,57 @@
         function findMatchesByLetters(name, verseList) {
             const firstLetter = name[0];
             const lastLetter = name[name.length - 1];
-            const getNormalizedLetter = (letter) => ({'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'})[letter]||letter;
+            const getNormalizedLetter = (letter) => ({'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'})[letter] || letter;
             const normalizedLastLetter = getNormalizedLetter(lastLetter);
 
             return verseList.filter(item => {
-                const text = item.text.replace(/<[^>]*>/g, '');
+                const text = item.text.replace(/<[^>]*>/g, '').replace(/[.,?!;׃]/g, ''); // Clean text
                 const words = text.split(' ').filter(w => w);
                 if (words.length < 1) return false;
+                
                 const verseFirstLetter = words[0][0];
                 const lastWord = words[words.length - 1];
-                let verseLastLetter = lastWord.slice(-1);
-                if ('.,?!;׃'.includes(verseLastLetter) && lastWord.length > 1) verseLastLetter = lastWord.slice(-2, -1);
+                const verseLastLetter = lastWord.slice(-1);
+                
                 return verseFirstLetter === firstLetter && getNormalizedLetter(verseLastLetter) === normalizedLastLetter;
             });
         }
 
         function findMatchesByName(name, verseList) {
-            return verseList.filter(item => item.text.includes(name));
+            // This search ignores nikud to improve matching
+            const cleanName = name.replace(/[\u0591-\u05C7]/g, '');
+            return verseList.filter(item => {
+                 const cleanText = item.text.replace(/[\u0591-\u05C7]/g, ''); // Remove nikud from verse
+                 return cleanText.includes(cleanName);
+            });
         }
 
         // --- Display Helper Function ---
-        function displayCurrentVerse(searchMode) {
-            if (!currentMatches[currentMatchIndex]) return;
-            const verse = currentMatches[currentMatchIndex];
-            let matchCounterHTML = '';
-            if (currentMatches.length > 1) {
-                matchCounterHTML = `<span class="match-counter">(פסוק ${currentMatchIndex + 1} מתוך ${currentMatches.length})</span>`;
-            }
+        function displayAllResults(matches, name) {
             resultDiv.classList.remove('fade-in');
-            void resultDiv.offsetWidth;
-            resultDiv.innerHTML = `
-                <p>${verse.text.replace(/<[^>]*>/g, '')}</p>
-                <div class="reference">
-                    ${verse.reference} ${matchCounterHTML}
-                    <div class="search-mode-info">שיטת חיפוש: ${searchMode}</div>
-                </div>
-            `;
+            void resultDiv.offsetWidth; // Trigger reflow
+
+            if (matches.length === 0) {
+                resultDiv.innerHTML = `<p>לא נמצא פסוק מתאים לשם '<strong>${name}</strong>' בכל התנ"ך.</p>`;
+                resultDiv.classList.add('fade-in');
+                return;
+            }
+
+            let html = `<p><strong>נמצאו ${matches.length} פסוקים תואמים עבור '${name}':</strong></p><hr>`;
+            
+            matches.forEach(verse => {
+                html += `
+                    <div class="result-item">
+                        <p class="result-verse">${verse.text.replace(/<[^>]*>/g, '')}</p>
+                        <div class="reference">
+                            ${verse.reference}
+                            <div class="search-mode-info">שיטת חיפוש: ${verse.searchMode}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            resultDiv.innerHTML = html;
             resultDiv.classList.add('fade-in');
         }
 
