@@ -308,7 +308,7 @@
 
         // --- Main Search Logic ---
         async function findVerse() {
-            searchButton.disabled = true; // Disable button during search
+            searchButton.disabled = true;
             const name = nameInput.value.trim();
             if (name.length < 2) {
                 resultDiv.innerHTML = '<p>אנא הכנס שם בעל שתי אותיות לפחות.</p>';
@@ -316,45 +316,51 @@
                 return;
             }
 
-            // Perform ONLY the letter-based search across the entire Tanakh
             const finalResults = findMatchesByLetters(name, allTanakhVerses);
-            
-            // Add searchMode property for consistency in display
             finalResults.forEach(m => m.searchMode = "אות ראשונה ואחרונה");
-            
-            // Display all found results
             displayAllResults(finalResults, name);
 
             searchButton.disabled = false;
         }
         
         // --- Search Helper Functions ---
+        // This is the excellent, robust function you proposed.
         function findMatchesByLetters(name, verseList) {
             const firstLetter = name[0];
             const lastLetter = name[name.length - 1];
-            // Handles final-form letters (ך, ם, ן, ף, ץ) by normalizing them
-            const getNormalizedLetter = (letter) => ({'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'})[letter] || letter;
+            const getNormalizedLetter = (letter) => ({ 'ך': 'כ', 'ם': 'מ', 'ן': 'נ', 'ף': 'פ', 'ץ': 'צ' }[letter] || letter);
             const normalizedLastLetter = getNormalizedLetter(lastLetter);
 
+            // A powerful cleaning function that leaves only Hebrew letters
+            function cleanHebrewWord(word) {
+                return word
+                    .replace(/[^\u05D0-\u05EA]/g, '')   // Leaves only Hebrew letters
+                    .trim();
+            }
+
             return verseList.filter(item => {
-                // Clean the verse text from any HTML tags and punctuation for accurate matching
-                const text = item.text.replace(/<[^>]*>/g, '').replace(/[.,?!;׃]/g, ''); 
-                const words = text.split(' ').filter(w => w); // Split into words and remove empty entries
+                const words = item.text.split(/\s+/).filter(Boolean);
                 if (words.length < 1) return false;
-                
-                const verseFirstLetter = words[0][0];
-                const lastWord = words[words.length - 1];
-                const verseLastLetter = lastWord.slice(-1);
-                
-                // Compare the first letter directly, and the normalized last letter
-                return verseFirstLetter === firstLetter && getNormalizedLetter(verseLastLetter) === normalizedLastLetter;
+
+                const firstWordClean = cleanHebrewWord(words[0]);
+                const lastWordClean = cleanHebrewWord(words[words.length - 1]);
+
+                if (!firstWordClean || !lastWordClean) return false;
+
+                const verseFirstLetter = firstWordClean[0];
+                const verseLastLetter = lastWordClean.slice(-1);
+
+                return (
+                    verseFirstLetter === firstLetter &&
+                    getNormalizedLetter(verseLastLetter) === normalizedLastLetter
+                );
             });
         }
 
         // --- Display Helper Function ---
         function displayAllResults(matches, name) {
             resultDiv.classList.remove('fade-in');
-            void resultDiv.offsetWidth; // Trigger reflow to restart animation
+            void resultDiv.offsetWidth;
 
             if (matches.length === 0) {
                 resultDiv.innerHTML = `<p>לא נמצא פסוק המתחיל באות '<strong>${name[0]}</strong>' ומסתיים באות '<strong>${name[name.length-1]}</strong>' עבור השם '<strong>${name}</strong>'.</p>`;
