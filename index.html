@@ -51,7 +51,6 @@
             'Numbers': 'במדבר', 'Deuteronomy': 'דברים'
         };
 
-        // פונקציה לטעינת כל חומשי התורה מה-API
         async function loadAllTorahBooks() {
             const books = ['Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy'];
             let loadedCount = 0;
@@ -68,19 +67,24 @@
                 );
 
                 const allBookData = await Promise.all(promises);
-
                 statusP.textContent = 'מעבד את הנתונים...';
                 
-                // עיבוד המידע שהתקבל למבנה הפנימי שלנו
                 allBookData.forEach(bookData => {
                     const hebrewBook = bookData.heRef;
                     bookData.he.forEach((chapter, chapterIndex) => {
-                        chapter.forEach((verseText, verseIndex) => {
-                            allVerses.push({
-                                text: verseText,
-                                reference: `${hebrewBook} ${String.fromCharCode(1488 + chapterIndex)}׳, ${String.fromCharCode(1488 + verseIndex)}׳`
+                        
+                        // ===== התיקון נמצא כאן =====
+                        // נוסיף בדיקה האם המשתנה 'chapter' הוא אכן מערך לפני שננסה להריץ עליו לולאה
+                        if (Array.isArray(chapter)) {
+                            chapter.forEach((verseText, verseIndex) => {
+                                allVerses.push({
+                                    text: verseText,
+                                    reference: `${hebrewBook} ${String.fromCharCode(1488 + chapterIndex)}׳, ${String.fromCharCode(1488 + verseIndex)}׳`
+                                });
                             });
-                        });
+                        }
+                        // ============================
+
                     });
                 });
                 
@@ -94,6 +98,7 @@
             }
         }
 
+        // שאר פונקציית החיפוש נשארת זהה לחלוטין
         function findVerse() {
             const nameInput = document.getElementById('nameInput').value.trim();
             const resultDiv = document.getElementById('result');
@@ -103,28 +108,21 @@
             }
             const firstLetter = nameInput[0];
             const lastLetter = nameInput[nameInput.length - 1];
-            
             const getNormalizedLetter = (letter) => {
                 const finalLetters = { 'ך': 'כ', 'ם': 'מ', 'ן': 'נ', 'ף': 'פ', 'ץ': 'צ' };
                 return finalLetters[letter] || letter;
             };
-
             const normalizedLastLetter = getNormalizedLetter(lastLetter);
             let foundVerse = null;
-
             for (const item of allVerses) {
-                const text = item.text.replace(/<[^>]*>/g, ''); // הסרת תגיות HTML אם קיימות
+                const text = item.text.replace(/<[^>]*>/g, '');
                 const words = text.split(' ');
                 if (words.length === 0) continue;
-                
                 const firstWord = words[0];
                 const lastWord = words[words.length - 1];
-
                 if (!firstWord || !lastWord) continue;
-
                 const verseFirstLetter = firstWord[0];
                 let verseLastLetter = lastWord.slice(-1);
-                
                 if ('.,?!;׃'.includes(verseLastLetter)) {
                     if (lastWord.length > 1) {
                        verseLastLetter = lastWord.slice(-2, -1);
@@ -132,13 +130,11 @@
                        verseLastLetter = lastWord[0];
                     }
                 }
-                
                 if (verseFirstLetter === firstLetter && getNormalizedLetter(verseLastLetter) === normalizedLastLetter) {
                     foundVerse = item;
-                    break; 
+                    break;
                 }
             }
-
             if (foundVerse) {
                 resultDiv.innerHTML = `<p>${foundVerse.text.replace(/<[^>]*>/g, '')}</p><p class="reference">${foundVerse.reference}</p>`;
             } else {
@@ -146,7 +142,6 @@
             }
         }
 
-        // טעינת המידע מיד כשהדף עולה
         document.addEventListener('DOMContentLoaded', loadAllTorahBooks);
     </script>
 </body>
