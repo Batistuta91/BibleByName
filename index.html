@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>פסוק אישי לפי שם - סגולה ליום הדין</title>
+    <title>פסוק אישי לפי שם - כל התנ"ך</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -165,33 +165,77 @@
             font-size: 0.8rem;
             color: #777;
             font-weight: 400;
+            margin-left: 10px;
         }
+
+        .search-mode-info {
+            font-style: italic;
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+            margin-top: 5px;
+        }
+/* --- Responsive Design for Mobile Phones --- */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px; /* הקטנת הרווח מהקצוות של המסך */
+            }
+
+            .container {
+                padding: 25px 15px; /* הקטנת הרווחים הפנימיים בתיבה הראשית */
+                margin: 0;
+            }
+
+            h1 {
+                font-size: 2.1em; /* הקטנת הכותרת הראשית */
+            }
+
+            .explanation {
+                font-size: 1em; /* הקטנת טקסט ההסבר */
+            }
+
+            .search-area {
+                padding: 20px;
+            }
+
+            input[type="text"] {
+                width: 90%; /* הרחבת שדה הקלט למילוי המסך */
+            }
+
+            button {
+                width: 80%; /* הרחבת הכפתור */
+                padding: 12px 20px;
+            }
+
+            #result {
+                font-size: 1.2em; /* הקטנת הפונט של התוצאה להתאמה למסך */
+                padding: 20px;
+            }
+        }
+
     </style>
 </head>
 <body>
-
     <div class="container">
         <h1>פסוק אישי לפי שם</h1>
-
         <div class="explanation">
             <p><strong>סגולה שלא ישכח שמו ליום הדין:</strong> יאמר קודם "יהיו לרצון" השני בתפילת העמידה, פסוק מהתנ"ך המתחיל באות הראשונה של שמו ומסתיים באות האחרונה של שמו, או פסוק ששמו מופיע בו. להלן פסוקי התנ"ך ממויינים לפי האות הראשונה והאחרונה שלהם.</p>
         </div>
-
         <div class="search-area">
             <label for="nameInput">הכניסו שם ולחצו לחיפוש הפסוק</label><br>
-            <input type="text" id="nameInput" placeholder="לדוגמא: דניאל">
+            <input type="text" id="nameInput" placeholder="לדוגמא: נתנאל">
             <br>
             <button id="searchButton" onclick="findVerse()">מצא את הפסוק שלי</button>
         </div>
-
         <div id="result">
             <p id="status">טוען את חמשת חומשי תורה מ-Sefaria, אנא המתן בסבלנות...</p>
         </div>
     </div>
 
     <script>
-        // --- Global Variables for State Management ---
-        let allVerses = [];
+        // --- Global Variables ---
+        let torahVerses = [];
+        let otherTanakhVerses = [];
+        let otherTanakhLoaded = false;
         let currentMatches = [];
         let currentMatchIndex = 0;
         let lastSearchedName = '';
@@ -199,145 +243,165 @@
         // --- DOM Elements ---
         const searchButton = document.getElementById('searchButton');
         const nameInput = document.getElementById('nameInput');
-        const statusP = document.getElementById('status');
         const resultDiv = document.getElementById('result');
+        const statusP = document.getElementById('status');
         
         searchButton.disabled = true;
 
-        const torahStructure = {
-            'Genesis': { name: 'בראשית', chapters: 50 }, 'Exodus': { name: 'שמות', chapters: 40 },
-            'Leviticus': { name: 'ויקרא', chapters: 27 }, 'Numbers': { name: 'במדבר', chapters: 36 },
-            'Deuteronomy': { name: 'דברים', chapters: 34 }
+        // --- Tanakh Structure Definition ---
+        const tanakhStructure = {
+            'Torah': {'Genesis': 50, 'Exodus': 40, 'Leviticus': 27, 'Numbers': 36, 'Deuteronomy': 34},
+            'Neviim': {'Joshua': 24, 'Judges': 21, 'I Samuel': 31, 'II Samuel': 24, 'I Kings': 22, 'II Kings': 25, 'Isaiah': 66, 'Jeremiah': 52, 'Ezekiel': 48, 'Hosea': 14, 'Joel': 4, 'Amos': 9, 'Obadiah': 1, 'Jonah': 4, 'Micah': 7, 'Nahum': 3, 'Habakkuk': 3, 'Zephaniah': 3, 'Haggai': 2, 'Zechariah': 14, 'Malachi': 3},
+            'Ketuvim': {'Psalms': 150, 'Proverbs': 31, 'Job': 42, 'Song of Songs': 8, 'Ruth': 4, 'Lamentations': 5, 'Ecclesiastes': 12, 'Esther': 10, 'Daniel': 12, 'Ezra': 10, 'Nehemiah': 13, 'I Chronicles': 29, 'II Chronicles': 36}
         };
 
-        // --- Loading Function ---
-        async function loadAllTorahBooks() {
+        // --- Data Loading Functions ---
+        async function loadBooks(bookList) {
             let chapterRequests = [];
-            for (const book in torahStructure) {
-                for (let i = 1; i <= torahStructure[book].chapters; i++) {
+            for (const book in bookList) {
+                for (let i = 1; i <= bookList[book]; i++) {
                     chapterRequests.push(fetch(`https://www.sefaria.org/api/texts/${book}.${i}`));
                 }
             }
-            statusP.textContent = `טוען ${chapterRequests.length} פרקים מהרשת...`;
-
-            try {
-                const responses = await Promise.all(chapterRequests);
-                const chapterDataPromises = responses.map(res => res.json());
-                const allChapterData = await Promise.all(chapterDataPromises);
-                statusP.textContent = 'מעבד את הנתונים...';
-
-                allChapterData.forEach(chapterInfo => {
-                    const hebrewReference = chapterInfo.heRef;
-                    const versesInChapter = chapterInfo.he;
-                    if (Array.isArray(versesInChapter)) {
-                        versesInChapter.forEach((verseText, verseIndex) => {
-                            allVerses.push({
-                                text: verseText,
-                                reference: `${hebrewReference}, ${String.fromCharCode(1488 + verseIndex)}׳`
-                            });
-                        });
-                    }
+            const responses = await Promise.all(chapterRequests);
+            const chapterDataPromises = responses.map(res => res.json());
+            const allChapterData = await Promise.all(chapterDataPromises);
+            
+            let verses = [];
+            allChapterData.forEach(chapterInfo => {
+                if (!chapterInfo.heRef || !Array.isArray(chapterInfo.he)) return;
+                const hebrewReference = chapterInfo.heRef;
+                const versesInChapter = chapterInfo.he;
+                versesInChapter.forEach((verseText, verseIndex) => {
+                    verses.push({ text: verseText, reference: `${hebrewReference}, ${String.fromCharCode(1488 + verseIndex)}׳` });
                 });
-                
-                statusP.textContent = `המאגר נטען (${allVerses.length.toLocaleString()} פסוקים). ניתן לחפש.`;
-                searchButton.disabled = false;
+            });
+            return verses;
+        }
 
+        async function loadInitialData() {
+            try {
+                torahVerses = await loadBooks(tanakhStructure.Torah);
+                statusP.textContent = `המאגר נטען (${torahVerses.length.toLocaleString()} פסוקי תורה). ניתן לחפש.`;
+                searchButton.disabled = false;
             } catch (error) {
                 console.error('Sefaria API Error:', error);
-                statusP.textContent = 'שגיאת רשת: לא ניתן היה להתחבר למאגר של Sefaria. אנא בדוק את חיבור האינטרנט ורענן.';
+                statusP.textContent = 'שגיאת רשת. אנא בדוק את חיבור האינטרנט ורענן.';
                 statusP.style.color = 'red';
             }
         }
 
-        // --- Main Search Function ---
-        function findVerse() {
+        // --- Main Search Logic ---
+        async function findVerse() {
+            searchButton.disabled = true; // Disable button during search
             const currentName = nameInput.value.trim();
             if (currentName.length < 2) {
                 resultDiv.innerHTML = '<p>אנא הכנס שם בעל שתי אותיות לפחות.</p>';
+                searchButton.disabled = false;
                 return;
             }
 
-            // Check if it's a new search or a request for the next match
             if (currentName !== lastSearchedName) {
-                // This is a new search
                 lastSearchedName = currentName;
-                const firstLetter = currentName[0];
-                const lastLetter = currentName[currentName.length - 1];
                 
-                const getNormalizedLetter = (letter) => {
-                    const finalLetters = { 'ך': 'כ', 'ם': 'מ', 'ן': 'נ', 'ף': 'פ', 'ץ': 'צ' };
-                    return finalLetters[letter] || letter;
-                };
-                const normalizedLastLetter = getNormalizedLetter(lastLetter);
-                
-                // Find all matches, not just the first one
-                currentMatches = allVerses.filter(item => {
-                    const text = item.text.replace(/<[^>]*>/g, '');
-                    const words = text.split(' ');
-                    if (words.length === 0) return false;
-                    const firstWord = words[0];
-                    const lastWord = words[words.length - 1];
-                    if (!firstWord || !lastWord) return false;
-                    const verseFirstLetter = firstWord[0];
-                    let verseLastLetter = lastWord.slice(-1);
-                    if ('.,?!;׃'.includes(verseLastLetter)) {
-                        verseLastLetter = (lastWord.length > 1) ? lastWord.slice(-2, -1) : lastWord[0];
-                    }
-                    return verseFirstLetter === firstLetter && getNormalizedLetter(verseLastLetter) === normalizedLastLetter;
-                });
-                
-                currentMatchIndex = 0;
-
-                if (currentMatches.length === 0) {
-                    resultDiv.innerHTML = `<p>לא נמצא פסוק מתאים לשם '${currentName}' בחמשת חומשי תורה.</p>`;
-                    resultDiv.classList.add('fade-in');
+                // Step 1: Search Torah by letters
+                currentMatches = findMatchesByLetters(currentName, torahVerses);
+                if (currentMatches.length > 0) {
+                    currentMatchIndex = 0;
+                    displayCurrentVerse("אות ראשונה ואחרונה (בתורה)");
+                    searchButton.disabled = false;
                     return;
                 }
-            } else {
-                // This is a request for the next verse from the existing matches
-                if (currentMatches.length <= 1) return; // No other verses to show
-                currentMatchIndex++;
-                if (currentMatchIndex >= currentMatches.length) {
-                    currentMatchIndex = 0; // Loop back to the beginning
+
+                // Step 2: Search rest of Tanakh by letters
+                resultDiv.innerHTML = `<p>לא נמצא פסוק בתורה. מחפש כעת בשאר התנ"ך...</p>`;
+                if (!otherTanakhLoaded) {
+                    const neviimKetuvim = { ...tanakhStructure.Neviim, ...tanakhStructure.Ketuvim };
+                    otherTanakhVerses = await loadBooks(neviimKetuvim);
+                    otherTanakhLoaded = true;
                 }
+                currentMatches = findMatchesByLetters(currentName, otherTanakhVerses);
+                if (currentMatches.length > 0) {
+                    currentMatchIndex = 0;
+                    displayCurrentVerse("אות ראשונה ואחרונה (נביאים וכתובים)");
+                    searchButton.disabled = false;
+                    return;
+                }
+                
+                // Step 3: Search entire Tanakh by name
+                resultDiv.innerHTML = `<p>לא נמצא פסוק לפי אותיות. מחפש פסוק המכיל את השם...</p>`;
+                const allTanakhVerses = [...torahVerses, ...otherTanakhVerses];
+                currentMatches = findMatchesByName(currentName, allTanakhVerses);
+                if(currentMatches.length > 0) {
+                    currentMatchIndex = 0;
+                    displayCurrentVerse("השם מופיע בפסוק");
+                    searchButton.disabled = false;
+                    return;
+                }
+
+                // Final: Not Found
+                resultDiv.innerHTML = `<p>לא נמצא פסוק מתאים לשם '${currentName}' בכל התנ"ך.</p>`;
+
+            } else { // This is a "next verse" request
+                if (currentMatches.length <= 1) {
+                    searchButton.disabled = false;
+                    return;
+                }
+                currentMatchIndex++;
+                if (currentMatchIndex >= currentMatches.length) currentMatchIndex = 0;
+                displayCurrentVerse(document.querySelector('.search-mode-info').textContent.replace('שיטת חיפוש: ', ''));
             }
-            
-            displayCurrentVerse();
+            searchButton.disabled = false;
+        }
+        
+        // --- Search Helper Functions ---
+        function findMatchesByLetters(name, verseList) {
+            const firstLetter = name[0];
+            const lastLetter = name[name.length - 1];
+            const getNormalizedLetter = (letter) => ({'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'})[letter]||letter;
+            const normalizedLastLetter = getNormalizedLetter(lastLetter);
+
+            return verseList.filter(item => {
+                const text = item.text.replace(/<[^>]*>/g, '');
+                const words = text.split(' ').filter(w => w);
+                if (words.length < 1) return false;
+                const verseFirstLetter = words[0][0];
+                const lastWord = words[words.length - 1];
+                let verseLastLetter = lastWord.slice(-1);
+                if ('.,?!;׃'.includes(verseLastLetter) && lastWord.length > 1) verseLastLetter = lastWord.slice(-2, -1);
+                return verseFirstLetter === firstLetter && getNormalizedLetter(verseLastLetter) === normalizedLastLetter;
+            });
         }
 
-        // --- Helper function to display the verse ---
-        function displayCurrentVerse() {
-            if (!currentMatches[currentMatchIndex]) return;
+        function findMatchesByName(name, verseList) {
+            return verseList.filter(item => item.text.includes(name));
+        }
 
+        // --- Display Helper Function ---
+        function displayCurrentVerse(searchMode) {
+            if (!currentMatches[currentMatchIndex]) return;
             const verse = currentMatches[currentMatchIndex];
             let matchCounterHTML = '';
-
-            // Show a counter if more than one match was found
             if (currentMatches.length > 1) {
                 matchCounterHTML = `<span class="match-counter">(פסוק ${currentMatchIndex + 1} מתוך ${currentMatches.length})</span>`;
             }
-
             resultDiv.classList.remove('fade-in');
-            void resultDiv.offsetWidth; // Trigger reflow to restart animation
-
+            void resultDiv.offsetWidth;
             resultDiv.innerHTML = `
                 <p>${verse.text.replace(/<[^>]*>/g, '')}</p>
-                <p class="reference">
-                    ${verse.reference}
-                    ${matchCounterHTML}
-                </p>
+                <div class="reference">
+                    ${verse.reference} ${matchCounterHTML}
+                    <div class="search-mode-info">שיטת חיפוש: ${searchMode}</div>
+                </div>
             `;
-            
             resultDiv.classList.add('fade-in');
         }
 
         // --- Event Listeners ---
-        document.addEventListener('DOMContentLoaded', loadAllTorahBooks);
-
-        // Add event listener for the "Enter" key on the input field
-        nameInput.addEventListener('keydown', function(event) {
+        document.addEventListener('DOMContentLoaded', loadInitialData);
+        nameInput.addEventListener('keydown', (event) => {
             if (event.key === 'Enter' && !searchButton.disabled) {
-                event.preventDefault(); // Prevent default behavior (like form submission)
+                event.preventDefault();
                 findVerse();
             }
         });
