@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>פסוק אישי לפי שם - כל התנ"ך</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@700&family=Assistant:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        /* --- General Styling --- */
+        :root {
+            --primary-color: #0D2B45; /* כחול עמוק */
+            --secondary-color: #205375; /* כחול ביניים */
+            --accent-color: #c09f80; /* זהב/ברונזה עדין */
+            --background-color: #f8f6f2; /* רקע אוף-ווייט חם */
+            --text-color: #333D45; /* אפור-כחול כהה לטקסט */
+            --light-bg: #FFFFFF; /* לבן */
+            --result-bg: #fffaf0; /* קרם בהיר לתוצאה */
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        body {
+            font-family: 'Assistant', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            line-height: 1.7;
+            background-image: url('https://www.transparenttextures.com/patterns/light-paper-fibers.png');
+        }
+        /* --- Container --- */
+        .container {
+            width: 100%;
+            max-width: 750px;
+            background-color: var(--light-bg);
+            padding: 40px 50px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            border-top: 5px solid var(--primary-color);
+        }
+        /* --- Typography --- */
+        h1 {
+            font-family: 'Frank Ruhl Libre', serif;
+            color: var(--primary-color);
+            font-size: 2.8em;
+            margin-bottom: 15px;
+        }
+        .explanation {
+            max-width: 600px;
+            margin: 0 auto 30px auto;
+            font-size: 1.1em;
+            color: #555;
+        }
+        strong {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #e0e6ed;
+            margin: 20px 0;
+        }
+        /* --- Search Area --- */
+        .search-area {
+            margin-top: 30px;
+            padding: 30px;
+            background-color: #f7f9fc;
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+        }
+        label {
+            font-size: 1.25em;
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+        input[type="text"] {
+            width: 70%;
+            padding: 12px 15px;
+            margin-top: 15px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1.2em;
+            text-align: right;
+            font-family: 'Assistant', sans-serif;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(192, 159, 128, 0.2);
+        }
+        .filter-row {
+            margin-top: 18px;
+            font-size: 1em;
+            font-weight: 400;
+            color: var(--text-color);
+        }
+        .filter-row label {
+            font-size: 1em;
+            font-weight: 400;
+            color: var(--text-color);
+            cursor: pointer;
+        }
+        .filter-row input[type="checkbox"] {
+            margin-left: 8px;
+            vertical-align: middle;
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+        button {
+            display: block;
+            width: 50%;
+            margin: 20px auto 0 auto;
+            padding: 14px 28px;
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--light-bg);
+            background-color: var(--accent-color);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        button:hover:not(:disabled) {
+            background-color: #a88a6d; /* גוון כהה יותר של הצבע */
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background-color: #a0a0a0;
+            cursor: not-allowed;
+        }
+        .show-more-btn {
+            width: auto;
+            display: inline-block;
+            margin: 18px auto 0 auto;
+            padding: 9px 20px;
+            font-size: 0.95em;
+            background-color: var(--secondary-color);
+        }
+        .show-more-btn:hover:not(:disabled) {
+            background-color: var(--primary-color);
+        }
+        /* --- Result Area --- */
+        #result {
+            margin-top: 35px;
+            padding: 25px;
+            background-color: var(--result-bg);
+            border: 1px solid #e9e0d3;
+            border-radius: 8px;
+            min-height: 60px;
+            font-size: 1.2em;
+            line-height: 1.8;
+            color: var(--text-color);
+            text-align: right;
+        }
+
+        #result.fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+        .result-item {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e9e0d3;
+        }
+        .result-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .result-verse {
+            font-weight: 600;
+            font-size: 1.2em;
+            color: var(--text-color);
+        }
+        .reference {
+            font-size: 1rem;
+            color: var(--secondary-color);
+            margin-top: 10px;
+            font-weight: 400;
+        }
+        #statusWrap {
+            text-align: center;
+        }
+        #refreshCacheLink {
+            display: block;
+            margin-top: 8px;
+            font-size: 0.85em;
+            color: #888;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        .load-error {
+            color: #a33;
+            font-size: 0.9em;
+            margin-top: 8px;
+        }
+        /* --- Responsive Design for Mobile Phones --- */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .container {
+                padding: 25px 15px;
+                margin: 0;
+            }
+            h1 {
+                font-size: 2.1em;
+            }
+            .explanation {
+                font-size: 1em;
+            }
+            .search-area {
+                padding: 20px;
+            }
+            input[type="text"] {
+                width: 90%;
+            }
+            button {
+                width: 80%;
+                padding: 12px 20px;
+            }
+            #result {
+                font-size: 1em;
+                padding: 20px;
+            }
+            .result-verse {
+                font-size: 1.1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>פסוק אישי לפי שם</h1>
+        <div class="explanation">
+            <p><strong>סגולה שלא ישכח שמו ליום הדין:</strong> יאמר קודם "יהיו לרצון" השני בתפילת העמידה, פסוק מהתנ"ך המתחיל באות הראשונה של שמו ומסתיים באות האחרונה של שמו. הכלי יציג את כל הפסוקים התואמים מכל התנ"ך.</p>
+        </div>
+        <div class="search-area">
+            <label for="nameInput">הכניסו שם ולחצו לחיפוש הפסוק</label><br>
+            <input type="text" id="nameInput" placeholder="לדוגמא: נתנאל">
+            <div class="filter-row">
+                <label><input type="checkbox" id="tehillimOnly"> חפש רק בספר תהלים (המנהג הנפוץ)</label>
+            </div>
+            <button id="searchButton" onclick="findVerse()">מצא את הפסוק שלי</button>
+        </div>
+        <div id="statusWrap">
+            <p id="status">טוען את כל התנ"ך מ-Sefaria, אנא המתן בסבלנות...</p>
+        </div>
+        <div id="result"></div>
+    </div>
+    <script>
+        // --- Global Variables ---
+        let allTanakhVerses = [];
+        let currentMatches = [];
+        let currentShownCount = 0;
+        const RESULTS_PAGE_SIZE = 50;
+        const CACHE_KEY = 'tanakhVersesCacheV4';
+        const CACHE_MAX_AGE_DAYS = 30;
+
+        // --- DOM Elements ---
+        const searchButton = document.getElementById('searchButton');
+        const nameInput = document.getElementById('nameInput');
+        const resultDiv = document.getElementById('result');
+        const statusP = document.getElementById('status');
+        const tehillimOnlyCheckbox = document.getElementById('tehillimOnly');
+
+        searchButton.disabled = true;
+
+        // --- Tanakh Structure Definition ---
+        const tanakhStructure = {
+            'Torah': {'Genesis': 50, 'Exodus': 40, 'Leviticus': 27, 'Numbers': 36, 'Deuteronomy': 34},
+            'Neviim': {'Joshua': 24, 'Judges': 21, 'I Samuel': 31, 'II Samuel': 24, 'I Kings': 22, 'II Kings': 25, 'Isaiah': 66, 'Jeremiah': 52, 'Ezekiel': 48, 'Hosea': 14, 'Joel': 4, 'Amos': 9, 'Obadiah': 1, 'Jonah': 4, 'Micah': 7, 'Nahum': 3, 'Habakkuk': 3, 'Zephaniah': 3, 'Haggai': 2, 'Zechariah': 14, 'Malachi': 3},
+            'Ketuvim': {'Psalms': 150, 'Proverbs': 31, 'Job': 42, 'Song of Songs': 8, 'Ruth': 4, 'Lamentations': 5, 'Ecclesiastes': 12, 'Esther': 10, 'Daniel': 12, 'Ezra': 10, 'Nehemiah': 13, 'I Chronicles': 29, 'II Chronicles': 36}
+        };
+
+        // --- Hebrew Book Names (used to build correct per-verse references ourselves,
+        //     since Sefaria's heRef for a multi-chapter range is not per-verse) ---
+        const HEBREW_BOOK_NAMES = {
+            'Genesis': 'בראשית', 'Exodus': 'שמות', 'Leviticus': 'ויקרא', 'Numbers': 'במדבר', 'Deuteronomy': 'דברים',
+            'Joshua': 'יהושע', 'Judges': 'שופטים', 'I Samuel': 'שמואל א׳', 'II Samuel': 'שמואל ב׳',
+            'I Kings': 'מלכים א׳', 'II Kings': 'מלכים ב׳', 'Isaiah': 'ישעיהו', 'Jeremiah': 'ירמיהו',
+            'Ezekiel': 'יחזקאל', 'Hosea': 'הושע', 'Joel': 'יואל', 'Amos': 'עמוס', 'Obadiah': 'עובדיה',
+            'Jonah': 'יונה', 'Micah': 'מיכה', 'Nahum': 'נחום', 'Habakkuk': 'חבקוק', 'Zephaniah': 'צפניה',
+            'Haggai': 'חגי', 'Zechariah': 'זכריה', 'Malachi': 'מלאכי',
+            'Psalms': 'תהלים', 'Proverbs': 'משלי', 'Job': 'איוב', 'Song of Songs': 'שיר השירים', 'Ruth': 'רות',
+            'Lamentations': 'איכה', 'Ecclesiastes': 'קהלת', 'Esther': 'אסתר', 'Daniel': 'דניאל',
+            'Ezra': 'עזרא', 'Nehemiah': 'נחמיה', 'I Chronicles': 'דברי הימים א׳', 'II Chronicles': 'דברי הימים ב׳'
+        };
+
+        // --- Hebrew Gematria Numeral Conversion (correct verse/chapter numbering) ---
+        // Handles the traditional avoidance of spelling the divine name (15 -> ט"ו, 16 -> ט"ז)
+        // and hundreds above 400 by repeating ת. Correct for any positive integer we'll encounter
+        // (chapters up to 150, verses up to ~176), and safely degrades for larger numbers too.
+        function numberToHebrewLetters(num) {
+            if (!Number.isFinite(num) || num <= 0) return String(num);
+
+            const hundreds = ['', 'ק', 'ר', 'ש', 'ת'];
+            const tens = ['', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ'];
+            const units = ['', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט'];
+
+            let n = num;
+            let result = '';
+
+            while (n >= 400) {
+                result += 'ת';
+                n -= 400;
+            }
+            if (n >= 100) {
+                result += hundreds[Math.floor(n / 100)];
+                n %= 100;
+            }
+
+            if (n === 15) {
+                result += 'טו';
+            } else if (n === 16) {
+                result += 'טז';
+            } else {
+                if (n >= 10) {
+                    result += tens[Math.floor(n / 10)];
+                    n %= 10;
+                }
+                if (n > 0) {
+                    result += units[n];
+                }
+            }
+
+            if (result.length === 0) return '';
+            if (result.length === 1) return result + '׳';
+            return result.slice(0, -1) + '״' + result.slice(-1);
+        }
+
+        // --- Local cache helpers (so a returning visitor doesn't re-download ~930 chapters) ---
+        function loadFromCache() {
+            try {
+                const raw = localStorage.getItem(CACHE_KEY);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                if (!parsed || !Array.isArray(parsed.verses) || !parsed.timestamp) return null;
+                const ageDays = (Date.now() - parsed.timestamp) / (1000 * 60 * 60 * 24);
+                if (ageDays > CACHE_MAX_AGE_DAYS) return null;
+                return parsed.verses;
+            } catch (e) {
+                return null;
+            }
+        }
+        function saveToCache(verses) {
+            try {
+                localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), verses }));
+            } catch (e) {
+                console.warn('לא ניתן היה לשמור את המאגר בזיכרון המקומי (אולי אין מספיק מקום פנוי):', e);
+            }
+        }
+        function showRefreshLink() {
+            if (document.getElementById('refreshCacheLink')) return;
+            const link = document.createElement('a');
+            link.id = 'refreshCacheLink';
+            link.href = '#';
+            link.textContent = 'רענן את המאגר מהאינטרנט';
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                link.remove();
+                searchButton.disabled = true;
+                loadInitialData(true);
+            });
+            document.getElementById('statusWrap').appendChild(link);
+        }
+
+        // --- Data Loading Functions ---
+        // 'he' from a single-chapter fetch is a flat array of verse strings;
+        // from a multi-chapter range fetch it's an array of arrays (one per chapter).
+        // Normalize both shapes to "array of chapters, each an array of verses".
+        function normalizeChapters(he) {
+            if (!Array.isArray(he)) return [];
+            if (he.length > 0 && Array.isArray(he[0])) return he;
+            return [he];
+        }
+
+        // Sefaria's verse strings are not plain text - they often embed HTML markup
+        // (e.g. <sup>/<i> footnote markers, or literal "&nbsp;" used for visual spacing
+        // between poetic clauses). A naive tag-stripping regex leaves entities like
+        // "&nbsp;" and footnote text showing up literally in the display.
+        // This parses the fragment in a detached, never-displayed element so entities are
+        // decoded correctly, then removes footnote elements before reading .textContent.
+        // Note: this is safe even though it looks like "parsing untrusted HTML" - assigning
+        // to .innerHTML never executes embedded <script> content, and we never re-insert
+        // this fragment into the visible page; only the extracted plain text is used, and
+        // it is always placed into the DOM via .textContent, never .innerHTML.
+        const sanitizerEl = document.createElement('div');
+        function cleanVerseText(rawText) {
+            if (!rawText) return '';
+            sanitizerEl.innerHTML = rawText;
+            sanitizerEl.querySelectorAll('sup, i.footnote, .footnote, .footnote-marker').forEach(el => el.remove());
+            const text = sanitizerEl.textContent || '';
+            sanitizerEl.textContent = '';
+            return text.replace(/\s+/g, ' ').trim();
+        }
+
+        async function fetchBook(book, chapterCount) {
+            const url = chapterCount === 1
+                ? `https://www.sefaria.org/api/texts/${encodeURIComponent(book)}.1`
+                : `https://www.sefaria.org/api/texts/${encodeURIComponent(book)}.1-${chapterCount}`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            if (!data || !data.he) throw new Error('missing "he" field');
+            return data;
+        }
+
+        async function loadBooksFromNetwork(bookList) {
+            const bookNames = Object.keys(bookList);
+            const total = bookNames.length;
+            let loadedCount = 0;
+            const failedBooks = [];
+
+            // One request per book (a chapter-range request) instead of one request per chapter -
+            // this cuts ~930 requests down to 24 and is dramatically faster and more reliable.
+            const settled = await Promise.all(bookNames.map(async (book) => {
+                try {
+                    const data = await fetchBook(book, bookList[book]);
+                    loadedCount++;
+                    statusP.textContent = `טוען ספרי תנ"ך מ-Sefaria... (${loadedCount}/${total})`;
+                    return { book, data, ok: true };
+                } catch (err) {
+                    loadedCount++;
+                    return { book, ok: false, error: err };
+                }
+            }));
+
+            let verses = [];
+            settled.forEach(entry => {
+                if (!entry.ok) {
+                    failedBooks.push(entry.book);
+                    return;
+                }
+                const hebrewBookName = HEBREW_BOOK_NAMES[entry.book] || entry.book;
+                const chapters = normalizeChapters(entry.data.he);
+                chapters.forEach((versesInChapter, chapterIdx) => {
+                    if (!Array.isArray(versesInChapter)) return;
+                    const chapterHeb = numberToHebrewLetters(chapterIdx + 1);
+                    versesInChapter.forEach((verseText, verseIdx) => {
+                        if (!verseText) return;
+                        const cleanText = cleanVerseText(verseText);
+                        if (!cleanText) return;
+                        const verseHeb = numberToHebrewLetters(verseIdx + 1);
+                        verses.push({
+                            text: cleanText,
+                            book: entry.book,
+                            reference: `${hebrewBookName} ${chapterHeb}, ${verseHeb}`
+                        });
+                    });
+                });
+            });
+
+            return { verses, failedBooks };
+        }
+
+        async function loadInitialData(forceRefresh) {
+            if (!forceRefresh) {
+                const cached = loadFromCache();
+                if (cached && cached.length > 0) {
+                    allTanakhVerses = cached;
+                    statusP.textContent = `המאגר נטען מהזיכרון המקומי (${allTanakhVerses.length.toLocaleString()} פסוקים). ניתן לחפש.`;
+                    statusP.style.color = '';
+                    searchButton.disabled = false;
+                    showRefreshLink();
+                    return;
+                }
+            }
+
+            statusP.textContent = 'טוען את כל התנ"ך מ-Sefaria, אנא המתן בסבלנות...';
+            statusP.style.color = '';
+            const oldError = document.querySelector('.load-error');
+            if (oldError) oldError.remove();
+
+            try {
+                const allBooks = { ...tanakhStructure.Torah, ...tanakhStructure.Neviim, ...tanakhStructure.Ketuvim };
+                const { verses, failedBooks } = await loadBooksFromNetwork(allBooks);
+
+                if (verses.length === 0) {
+                    throw new Error('no verses loaded');
+                }
+
+                allTanakhVerses = verses;
+                saveToCache(verses);
+
+                if (failedBooks.length > 0) {
+                    statusP.textContent = `המאגר נטען (${allTanakhVerses.length.toLocaleString()} פסוקים), אך ${failedBooks.length} ספרים נכשלו בטעינה.`;
+                    const errP = document.createElement('p');
+                    errP.className = 'load-error';
+                    errP.textContent = `ספרים שלא נטענו: ${failedBooks.map(b => HEBREW_BOOK_NAMES[b] || b).join(', ')}. אפשר לנסות לרענן את המאגר.`;
+                    document.getElementById('statusWrap').appendChild(errP);
+                } else {
+                    statusP.textContent = `המאגר נטען (${allTanakhVerses.length.toLocaleString()} פסוקים). ניתן לחפש.`;
+                }
+                searchButton.disabled = false;
+                showRefreshLink();
+            } catch (error) {
+                console.error('Sefaria API Error:', error);
+                statusP.textContent = 'שגיאת רשת בטעינת התנ"ך. אנא בדוק את חיבור האינטרנט ונסה לרענן את הדף.';
+                statusP.style.color = 'red';
+            }
+        }
+
+        // --- Main Search Logic ---
+        function findVerse() {
+            const name = nameInput.value.trim();
+            if (name.length < 2) {
+                resultDiv.innerHTML = '';
+                const p = document.createElement('p');
+                p.textContent = 'אנא הכנס שם בעל שתי אותיות לפחות.';
+                resultDiv.appendChild(p);
+                return;
+            }
+
+            const pool = tehillimOnlyCheckbox.checked
+                ? allTanakhVerses.filter(v => v.book === 'Psalms')
+                : allTanakhVerses;
+
+            const matches = findMatchesByLetters(name, pool);
+            displayAllResults(matches, name);
+        }
+
+        // --- Search Helper Functions ---
+        function findMatchesByLetters(name, verseList) {
+            const firstLetter = name[0];
+            const lastLetter = name[name.length - 1];
+
+            // המרת אותיות סופיות לצורתן הרגילה, כדי שהחיפוש יתאים גם אם המשתמש
+            // הקליד צורה רגילה ("כ") במקום סופית ("ך"), ולהפך
+            const normalizeMap = { 'ך': 'כ', 'ם': 'מ', 'ן': 'נ', 'ף': 'פ', 'ץ': 'צ' };
+            const getNormalizedLetter = (letter) => normalizeMap[letter] || letter;
+            const lettersMatch = (letter1, letter2) => getNormalizedLetter(letter1) === getNormalizedLetter(letter2);
+
+            function cleanHebrewWord(word) {
+                return word.replace(/[^א-ת]/g, '').trim();
+            }
+
+            return verseList.filter(item => {
+                const words = item.text.split(/\s+/).filter(Boolean);
+                if (words.length < 1) return false;
+                const firstWordClean = cleanHebrewWord(words[0]);
+                const lastWordClean = cleanHebrewWord(words[words.length - 1]);
+                if (!firstWordClean || !lastWordClean) return false;
+                const verseFirstLetter = firstWordClean[0];
+                const verseLastLetter = lastWordClean.slice(-1);
+                return (
+                    lettersMatch(verseFirstLetter, firstLetter) &&
+                    lettersMatch(verseLastLetter, lastLetter)
+                );
+            });
+        }
+
+        // --- Display Helper Functions (built via DOM API, not innerHTML, so verse text
+        //     from the API is never parsed as markup) ---
+        function displayAllResults(matches, name) {
+            currentMatches = matches;
+            currentShownCount = 0;
+
+            resultDiv.classList.remove('fade-in');
+            resultDiv.innerHTML = '';
+            void resultDiv.offsetWidth;
+
+            if (matches.length === 0) {
+                const p = document.createElement('p');
+                p.textContent = `לא נמצא פסוק המתחיל באות '${name[0]}' ומסתיים באות '${name[name.length - 1]}' עבור השם '${name}'.`;
+                resultDiv.appendChild(p);
+                resultDiv.classList.add('fade-in');
+                return;
+            }
+
+            const summary = document.createElement('p');
+            const strong = document.createElement('strong');
+            strong.textContent = `נמצאו ${matches.length.toLocaleString()} פסוקים תואמים עבור '${name}':`;
+            summary.appendChild(strong);
+            resultDiv.appendChild(summary);
+            resultDiv.appendChild(document.createElement('hr'));
+
+            renderMoreResults();
+            resultDiv.classList.add('fade-in');
+        }
+
+        function renderMoreResults() {
+            const nextBatch = currentMatches.slice(currentShownCount, currentShownCount + RESULTS_PAGE_SIZE);
+            nextBatch.forEach(verse => {
+                const item = document.createElement('div');
+                item.className = 'result-item';
+
+                const verseP = document.createElement('p');
+                verseP.className = 'result-verse';
+                verseP.textContent = verse.text;
+
+                const refDiv = document.createElement('div');
+                refDiv.className = 'reference';
+                refDiv.textContent = verse.reference;
+
+                item.appendChild(verseP);
+                item.appendChild(refDiv);
+                resultDiv.appendChild(item);
+            });
+            currentShownCount += nextBatch.length;
+
+            const oldBtn = document.getElementById('showMoreBtn');
+            if (oldBtn) oldBtn.remove();
+
+            if (currentShownCount < currentMatches.length) {
+                const moreBtn = document.createElement('button');
+                moreBtn.id = 'showMoreBtn';
+                moreBtn.className = 'show-more-btn';
+                moreBtn.textContent = `הצג עוד (נותרו ${(currentMatches.length - currentShownCount).toLocaleString()})`;
+                moreBtn.addEventListener('click', renderMoreResults);
+                resultDiv.appendChild(moreBtn);
+            }
+        }
+
+        // --- Event Listeners ---
+        document.addEventListener('DOMContentLoaded', () => loadInitialData(false));
+        nameInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' && !searchButton.disabled) {
+                event.preventDefault();
+                findVerse();
+            }
+        });
+    </script>
+</body>
+</html>
